@@ -17,97 +17,7 @@ def calculate_color(velocity, acceleration, jerk):
 
     return red, green, blue
 
-
-def interpolate_scanpath(scanpath_data, num_points=100):
-    """
-    Interpolate lines between consecutive scanpath points.
-
-    Parameters:
-    - scanpath_data: A list of tuples (x, y) representing gaze points over time.
-    - num_points: Number of interpolated points between each consecutive pair.
-
-    Returns:
-    - Interpolated scanpath data as a list of tuples (x, y).
-    """
-    interpolated_scanpath = []
-
-    for i in range(len(scanpath_data) - 1):
-        x1, y1 = scanpath_data[i]
-        x2, y2 = scanpath_data[i + 1]
-        interpolated_x = np.linspace(x1, x2, num_points, endpoint=False)
-        interpolated_y = np.linspace(y1, y2, num_points, endpoint=False)
-        interpolated_scanpath.extend(list(zip(interpolated_x, interpolated_y)))
-
-    # Add the last point of the original scanpath
-    interpolated_scanpath.append(scanpath_data[-1])
-
-    return interpolated_scanpath
-
-def convert_scanpath_to_colored_image(scanpath_data, image_size=(800, 600), line_width=2):
-    """
-    Convert eye scanpath data to an image-based visual form with color gradients based on movement dynamics.
-
-    Parameters:
-    - scanpath_data: A list of tuples (x, y) representing gaze points over time.
-    - image_size: Tuple specifying the size of the output image.
-    - line_width: Width of the lines representing the transitions.
-
-    Returns:
-    - A NumPy array representing the visual form of the scanpath.
-    """
-    # Create a blank image
-    image = np.zeros((*image_size, 1), dtype=float)
-
-    # Interpolate scanpath lines
-    interpolated_scanpath = interpolate_scanpath(scanpath_data)
-
-    # Normalize gaze points to image size
-    normalized_scanpath = [(int(x * image_size[0]), int(y * image_size[1])) for x, y in interpolated_scanpath]
-
-
-    raf = np.array(interpolate_scanpath)
-    # Create LineCollection for drawing lines with varying colors
-    segments = np.array(list(zip(normalized_scanpath, normalized_scanpath[1:])))
-    velocities = np.linalg.norm(np.diff(segments, axis=1), axis=2)
-        
-    # Normalize velocities to [0, 1]
-    normalized_velocities = (velocities - velocities.min()) / (velocities.max() - velocities.min()) *100
-
-    # Assign colors based on velocity
-    #colors = plt.cm.Reds(normalized_velocities)
-    red, green, blue = calculate_color(velocities, accelerations, jerks)
-    arr = np.array(normalized_scanpath[:-1])
-    row = arr[:, 0]
-    col = arr[:, 1]
-    image[row, col] = normalized_velocities
-    
-    return image
-
-# Example usage:
-time_points = [1,2,3,4,5,6,7,8]
-scanpath_data = np.array([[0.2, 0.3], [0.4, 0.6], [0.8, 0.5], [0.6, 0.2], [0.3, 0.1], [0.2, 0.2], [0.9, 0.5], [0.6, 0.7]])
-positions_x = scanpath_data[:,0]
-positions_y = scanpath_data[:,1]
-velocities = np.gradient(positions_x, time_points)
-accelerations = np.gradient(velocities, time_points)
-jerks = np.gradient(accelerations, time_points)
-
-# Normalize velocity, acceleration, and jerk for color mapping
-min_velocity, max_velocity = min(velocities), max(velocities)
-min_acceleration, max_acceleration = min(accelerations), max(accelerations)
-min_jerk, max_jerk = min(jerks), max(jerks)
-
-
-image_array = convert_scanpath_to_colored_image(scanpath_data)
-
-# Display the resulting image
-plt.imshow(image_array[:, :, 0], cmap='gray')
-plt.show()
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-def interpolate_scanpath_data(time_points, positions_x, positions_y, num_points=100):
+def interpolate_scanpath_data(time_points, positions_x, positions_y, num_points=5000):
     """
     Interpolate velocities, accelerations, and jerks for a given scanpath.
 
@@ -128,7 +38,9 @@ def interpolate_scanpath_data(time_points, positions_x, positions_y, num_points=
     # Interpolate positions
     interpolated_time = np.linspace(time_points[0], time_points[-1], num_points)
     interpolated_positions_x = spline_x(interpolated_time)
+    interpolated_positions_x = np.where(interpolated_positions_x>1,0.9,interpolated_positions_x)
     interpolated_positions_y = spline_y(interpolated_time)
+    interpolated_positions_y = np.where(interpolated_positions_y>1,0.9,interpolated_positions_y)
 
     # Calculate velocities, accelerations, and jerks for interpolated data
     interpolated_velocities = np.gradient(interpolated_positions_x, interpolated_time)
@@ -143,6 +55,73 @@ def interpolate_scanpath_data(time_points, positions_x, positions_y, num_points=
         interpolated_accelerations,
         interpolated_jerks
     )
+
+
+# def interpolate_scanpath(scanpath_data, num_points=100):
+#     """
+#     Interpolate lines between consecutive scanpath points.
+
+#     Parameters:
+#     - scanpath_data: A list of tuples (x, y) representing gaze points over time.
+#     - num_points: Number of interpolated points between each consecutive pair.
+
+#     Returns:
+#     - Interpolated scanpath data as a list of tuples (x, y).
+#     """
+#     interpolated_scanpath = []
+
+#     for i in range(len(scanpath_data) - 1):
+#         x1, y1 = scanpath_data[i]
+#         x2, y2 = scanpath_data[i + 1]
+#         interpolated_x = np.linspace(x1, x2, num_points, endpoint=False)
+#         interpolated_y = np.linspace(y1, y2, num_points, endpoint=False)
+#         interpolated_scanpath.extend(list(zip(interpolated_x, interpolated_y)))
+
+#     # Add the last point of the original scanpath
+#     interpolated_scanpath.append(scanpath_data[-1])
+
+#     return interpolated_scanpath
+
+def convert_scanpath_to_colored_image(scanpath_x, scanpath_y, image_size=(800, 600), line_width=2):
+    """
+    Convert eye scanpath data to an image-based visual form with color gradients based on movement dynamics.
+
+    Parameters:
+    - scanpath_data: A list of tuples (x, y) representing gaze points over time.
+    - image_size: Tuple specifying the size of the output image.
+    - line_width: Width of the lines representing the transitions.
+
+    Returns:
+    - A NumPy array representing the visual form of the scanpath.
+    """
+    # Create a blank image
+    image = np.zeros((*image_size, 3), dtype=np.uint8)
+
+    # Interpolate scanpath lines
+    #interpolated_scanpath = interpolate_scanpath(scanpath_data)
+
+    # Normalize gaze points to image size
+    #normalized_scanpath = [(int(x * image_size[0]), int(y * image_size[1])) for x, y in scanpath_data]
+
+
+    #raf = np.array(interpolate_scanpath)
+    # Create LineCollection for drawing lines with varying colors
+    #segments = np.array(list(zip(normalized_scanpath, normalized_scanpath[1:])))
+    #velocities = np.linalg.norm(np.diff(segments, axis=1), axis=2)
+        
+    # Normalize velocities to [0, 1]
+    #normalized_velocities = (velocities - velocities.min()) / (velocities.max() - velocities.min()) *100
+
+    # Assign colors based on velocity
+    #colors = plt.cm.Reds(normalized_velocities)
+    red, green, blue = calculate_color(interpolated_velocities, interpolated_accelerations, interpolated_jerks)
+    #arr = np.array(normalized_scanpath[:-1])
+    row = (scanpath_x*image_size[0]).astype(int)
+    col = (scanpath_y*image_size[1]).astype(int)
+    color_channel = np.concatenate((red.reshape(-1,1), green.reshape(-1,1),blue.reshape(-1,1)),-1)
+    image[row, col] = color_channel
+    
+    return image
 
 # Example usage:
 time_points = np.array([1, 2, 3, 4, 5, 6, 7, 8])
@@ -159,5 +138,22 @@ positions_y = scanpath_data[:, 1]
     interpolated_accelerations,
     interpolated_jerks
 ) = interpolate_scanpath_data(time_points, positions_x, positions_y)
+
+# Normalize velocity, acceleration, and jerk for color mapping
+min_velocity, max_velocity = min(interpolated_velocities), max(interpolated_velocities)
+min_acceleration, max_acceleration = min(interpolated_accelerations), max(interpolated_accelerations)
+min_jerk, max_jerk = min(interpolated_jerks), max(interpolated_jerks)
+
+image_array = convert_scanpath_to_colored_image(interpolated_positions_x, interpolated_positions_y)
+
+# Display the resulting image
+#plt.imshow(image_array[:, :, 0], cmap='gray')
+#plt.show()
+
+from PIL import Image
+img = Image.fromarray(image_array)
+img.save('testrgb.png')
+
+# Example usage:
 
 # Now you can use the interpolated data as needed
