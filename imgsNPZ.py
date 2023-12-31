@@ -1,14 +1,15 @@
 import numpy as np
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
+from tensorflow.keras.preprocessing.image import load_img
+from tensorflow.keras.preprocessing.image import img_to_array
 import glob
 
 imgDim = 256
 colorMode = "grayscale"
 colorChannels = 1
 
-imgDir = '/images_cropped/**/*.jpg'
-outputFile = '/ASD.npz'
+#imgDir = '/images_cropped/**/*.jpg'
+imgDir = 'images cropped/**/*.png'
+outputFile = 'ASD.npz'
 
 imgCount = 0
 for file in glob.iglob(imgDir, recursive=True):
@@ -20,7 +21,10 @@ y = np.zeros((imgCount, 1), dtype=np.uint8)
 
 for i, imgFile in enumerate(glob.iglob(imgDir, recursive=True)):
     #print(imgFile)
-    img = load_img(imgFile, color_mode=colorMode, target_size=(imgDim, imgDim))
+    try:
+        img = load_img(imgFile, color_mode=colorMode, target_size=(imgDim, imgDim))
+    except Exception:
+        pass
     img = img_to_array(img)
     X[i] = img
 
