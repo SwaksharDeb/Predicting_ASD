@@ -124,7 +124,7 @@ def convert_scanpath_to_colored_image(scanpath_x, scanpath_y, image_size=(800, 6
     return image
 
 # Example usage:
-file = pd.read_csv ('Jahanara_fixations.csv')
+file = pd.read_csv ('demo/eye tracking/Jahanara_fixations.csv')
 times = file.iloc[:,3].to_numpy()
 fixations = file.iloc[:,5:7].to_numpy()
 times_list = []
@@ -170,7 +170,7 @@ for i in range(0,len(times_list)):
     
     from PIL import Image
     img = Image.fromarray(image_array)
-    img.save('demo/testrgb_'+str(i)+'.png')
+    img.save('demo/images/testrgb_'+str(i)+'.png')
 
 # Example usage:
     
