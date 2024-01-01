@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from scipy.interpolate import CubicSpline
 import pandas as pd
+import glob
 
 def calculate_color(velocity, acceleration, jerk):
     # Normalize velocity, acceleration, and jerk to the range [0, 1]
@@ -124,55 +125,57 @@ def convert_scanpath_to_colored_image(scanpath_x, scanpath_y, image_size=(800, 6
     return image
 
 # Example usage:
-file = pd.read_csv ('demo/eye tracking/Jahanara_fixations.csv')
-times = file.iloc[:,3].to_numpy()
-fixations = file.iloc[:,5:7].to_numpy()
-times_list = []
-fixations_list = []
-count_init = 0
-for i in range(0,len(times)):
-    if i != len(times)-1 and times[i] > times[i+1]:
-        #count += 1
-    #else:
-        count_end = i
-        times_list.append(times[count_init:count_end])
-        fixations_list.append(fixations[count_init:count_end])
-        count_init = i+1
-    
-#time_points = np.array([1, 2, 3, 4, 5, 6, 7, 8])
-#scanpath_data = np.array([[0.2, 0.3], [0.4, 0.6], [0.8, 0.5], [0.6, 0.2], [0.3, 0.1], [0.2, 0.2], [0.9, 0.5], [0.6, 0.7]])
-for i in range(0,len(times_list)):
-    scanpath_data = fixations_list[i]
-    positions_x = scanpath_data[:, 0]
-    positions_y = scanpath_data[:, 1]
-    time_points = times_list[i]
-    
-    # Interpolate data
-    (
-        interpolated_time,
-        interpolated_positions_x,
-        interpolated_positions_y,
-        interpolated_velocities,
-        interpolated_accelerations,
-        interpolated_jerks
-    ) = interpolate_scanpath_data(time_points, positions_x, positions_y)
-    
-    # Normalize velocity, acceleration, and jerk for color mapping
-    min_velocity, max_velocity = min(interpolated_velocities), max(interpolated_velocities)
-    min_acceleration, max_acceleration = min(interpolated_accelerations), max(interpolated_accelerations)
-    min_jerk, max_jerk = min(interpolated_jerks), max(interpolated_jerks)
-    
-    image_array = convert_scanpath_to_colored_image(interpolated_positions_x, interpolated_positions_y)
-    
-    # Display the resulting image
-    #plt.imshow(image_array[:, :, 0], cmap='gray')
-    #plt.show()
-    
-    from PIL import Image
-    img = Image.fromarray(image_array)
-    img.save('demo/images/testrgb_'+str(i)+'.png')
-
-# Example usage:
+#file = pd.read_csv ('demo/eye tracking/Jahanara_fixations.csv')
+imgDir = 'demo/eye tracking/*.csv'
+for i, imgFile in enumerate(glob.iglob(imgDir, recursive=True)):
+    file = pd.read_csv (imgFile)
+    patient_name = imgFile[18:-14]
+    times = file.iloc[:,3].to_numpy()
+    fixations = file.iloc[:,5:7].to_numpy()
+    times_list = []
+    fixations_list = []
+    count_init = 0
+    for i in range(0,len(times)):
+        if i != len(times)-1 and times[i] > times[i+1]:
+            #count += 1
+        #else:
+            count_end = i
+            times_list.append(times[count_init:count_end])
+            fixations_list.append(fixations[count_init:count_end])
+            count_init = i+1
+        
+    #time_points = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+    #scanpath_data = np.array([[0.2, 0.3], [0.4, 0.6], [0.8, 0.5], [0.6, 0.2], [0.3, 0.1], [0.2, 0.2], [0.9, 0.5], [0.6, 0.7]])
+    for i in range(0,len(times_list)):
+        scanpath_data = fixations_list[i]
+        positions_x = scanpath_data[:, 0]
+        positions_y = scanpath_data[:, 1]
+        time_points = times_list[i]
+        
+        # Interpolate data
+        (
+            interpolated_time,
+            interpolated_positions_x,
+            interpolated_positions_y,
+            interpolated_velocities,
+            interpolated_accelerations,
+            interpolated_jerks
+        ) = interpolate_scanpath_data(time_points, positions_x, positions_y)
+        
+        # Normalize velocity, acceleration, and jerk for color mapping
+        min_velocity, max_velocity = min(interpolated_velocities), max(interpolated_velocities)
+        min_acceleration, max_acceleration = min(interpolated_accelerations), max(interpolated_accelerations)
+        min_jerk, max_jerk = min(interpolated_jerks), max(interpolated_jerks)
+        
+        image_array = convert_scanpath_to_colored_image(interpolated_positions_x, interpolated_positions_y)
+        
+        # Display the resulting image
+        #plt.imshow(image_array[:, :, 0], cmap='gray')
+        #plt.show()
+        
+        from PIL import Image
+        img = Image.fromarray(image_array)
+        img.save('demo/images/'+patient_name+'_'+str(i)+'.png')
     
     
     
