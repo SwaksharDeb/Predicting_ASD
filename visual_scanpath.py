@@ -170,7 +170,7 @@ for enum, imgFile in enumerate(glob.iglob(imgDir, recursive=True)):
         #sacads_pos_y = np.abs(sacads_pos_y / max(sacads_pos_y))
         time_points = times_list[i]
         
-        if len(fixation_data)<4:
+        if len(fixation_data)<3:
             continue
         # Interpolate data
         (

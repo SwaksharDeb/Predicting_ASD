@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D,MaxPooling2D
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, AveragePooling2D,MaxPooling2D
 from sklearn.metrics import roc_auc_score, roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import precision_score, recall_score
@@ -41,7 +42,7 @@ for train, test in kfold:
   model.add(Conv2D(16, (3, 3), padding='same', activation='relu'))
   model.add(MaxPooling2D(pool_size=(2, 2)))
   model.add(Dropout(0.20))
-
+    
   model.add(Conv2D(32, (3, 3),padding='same', activation='relu'))
   model.add(MaxPooling2D(pool_size=(2, 2)))
   model.add(Dropout(0.20))
@@ -53,13 +54,21 @@ for train, test in kfold:
   model.add(Flatten())
   
   model.add(Dense(256, activation='relu'))
+  model.add(Dropout(0.20))
   model.add(Dense(1, activation='sigmoid'))
   model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
   #model.summary()
   
+  model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath='checkpoints/', save_weights_only=True,
+                                                                 monitor='val_accuracy', mode='max',
+                                                                 save_best_only=True)
   #Fiting the model 
-  hist = model.fit(X[train], y[train], validation_split=0.2, epochs=nEpochs, batch_size=nBatch, verbose=1)
+  #hist = model.fit(X[train], y[train], validation_split=0.2, epochs=nEpochs, batch_size=nBatch, verbose=1)
+  hist = model.fit(X[train], y[train], validation_data=(X[test], y[test]), epochs=nEpochs, 
+                   batch_size=nBatch, callbacks=[model_checkpoint_callback], verbose=1)
   
+  
+  model.load_weights('checkpoints/')
   pred = model.predict(X[test]).ravel()
 
   #Calculating Recall and precision
