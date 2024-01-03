@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-dataset = np.load('ASD.npz') #Dataset ready in numpy array (removing background, resizing, and transforming into grayscale)
+dataset = np.load('ASD.npz')
 X = dataset['X']
 y = dataset['y']
 
