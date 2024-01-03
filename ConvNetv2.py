@@ -18,7 +18,7 @@ print(X.shape)
 print(y.shape)
 
 nfolds = 3
-nEpochs = 10
+nEpochs = 20
 nBatch= 16
 
 kfold = StratifiedKFold(n_splits=nfolds, shuffle=True, random_state=1).split(X, y) #Cross validation
@@ -58,7 +58,7 @@ for train, test in kfold:
   #model.summary()
   
   #Fiting the model 
-  hist = model.fit(X[train], y[train], validation_split=0.2, epochs=nEpochs, batch_size=nBatch, verbose=0)
+  hist = model.fit(X[train], y[train], validation_split=0.2, epochs=nEpochs, batch_size=nBatch, verbose=1)
   
   pred = model.predict(X[test]).ravel()
 
